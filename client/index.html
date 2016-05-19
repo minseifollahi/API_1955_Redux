@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang='en' ng-app='apiApp'>
+<head>
+	<title>1955 API</title>
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+	<!-- Optional theme -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+
+	<script type="text/javascript">
+
+		var apiApp = angular.module('apiApp', []);
+
+//BEGINNING CONTROLLER
+		apiApp.controller('apiController', function($scope, apiFactory){
+			$scope.people = [];
+
+			apiFactory.index(function(info){
+				$scope.people = info;
+			});
+
+			$scope.addPerson = function(){
+				apiFactory.create($scope.new_person, function(people){
+					$scope.people = people;
+				});
+				$scope.new_person = {};
+			}
+
+			$scope.removePerson = function($index){
+				apiFactory.delete($index, function(data){
+					$scope.people = data;
+				});
+			}
+		});
+
+
+// BEGINNING FACTORY
+		apiApp.factory('apiFactory', function($http){
+			var factory = {};
+			var people = [];
+
+			factory.index = function(callback){
+				$http.get('/people').success(function(output){
+					people = output;
+					callback(people);
+				});
+			}
+
+			factory.create = function(info, callback){
+				console.log(info);
+				$http.post('/people', info).success(function(output){
+					people.push(output);
+					factory.index(callback);
+					callback(people);
+				});
+			}
+
+			factory.delete = function(index, callback){
+				$http.post('/delete/' + people[index]._id).success(function(output){
+					factory.index(callback);
+					callback();
+				});
+			}
+
+			return factory;
+		})
+
+	</script>
+</head>
+<body>
+	<div class="container" ng-controller="apiController">
+		<h1>1955 Dashboard</h1>
+		<hr>
+		<p>Add people who were born in 1955</p>
+		<!-- <form role="form"> -->
+		  <div class="form-group col-sm-4">
+		    <input type="text" class="form-control" ng-model="new_person.name" placeholder="Name here..">
+		  </div>
+		  <button class="btn btn-primary btn-sm" ng-click="addPerson()">Submit</button>
+		<!-- </form> -->
+		<table class="table table-hover">
+		    <thead>
+		      <tr>
+		        <th>Name</th>
+		        <th>Action</th>
+		      </tr>
+		    </thead>
+		    <tbody>
+		      <tr ng-repeat="people in people">
+		        <td> {{ people.name }} </td>
+		        <td><button class="btn btn-danger btn-xs" ng-click="removePerson($index)">Delete</button></td>
+		      </tr>
+		    </tbody>
+		</table>
+
+	</div>
+</body>
+</html>
